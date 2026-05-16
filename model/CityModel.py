@@ -8,9 +8,9 @@ from mesa.visualization.components.matplotlib_components import make_mpl_space_c
 from constants import *
 from CityGridBuilder import CityGridBuilder
 from matplotlib.colors import ListedColormap
-import matplotlib                    # ← this was missing
-matplotlib.use("Agg")               # ← must come right after import matplotlib
-import matplotlib.pyplot as plt     # ← must come AFTER matplotlib.use()
+import matplotlib                   
+matplotlib.use("Agg")              
+import matplotlib.pyplot as plt 
 import numpy as np
 
 CELL_TYPE_MAP = {
@@ -83,16 +83,6 @@ def agent_portrayal(agent):
 
 model_instance = CityModel()
 
-
-# space_component = make_mpl_space_component(
-#     agent_portrayal=agent_portrayal,
-#     propertylayer_portrayal=propertylayer_portrayal,
-# )
-
-# page = SolaraViz(
-#     model_instance,
-#     components=[space_component]
-# )
 
 def make_city_map(model):
     fig, ax = plt.subplots(figsize=(100, 100))

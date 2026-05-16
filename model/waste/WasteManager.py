@@ -105,6 +105,12 @@ class WasteManager:
     # State mutations — called by agents                                  #
     # ------------------------------------------------------------------ #
 
+    def is_wasteable(self, pos: tuple) -> bool:
+        """Return True if waste can appear on this cell."""
+        x, y = pos
+        val  = self._original_cell_types[x][y]
+        return val in (CELL_TYPE_MAP["road"], CELL_TYPE_MAP["attractive"])
+    
     def add_waste(self, pos: tuple, amount: int = 1) -> None:
         x, y = pos
         if self._original_cell_types[x][y] not in (

@@ -14,8 +14,8 @@ from matplotlib.colors import ListedColormap
 from constants import *
 from CityGridBuilder import CityGridBuilder
 from waste.WasteManager import WasteManager
-
-
+from agents.AgentFactory import AgentFactory
+from agents.HumanAgent import HumanAgent
 # ================================================================== #
 # Visualization config                                                 #
 # ================================================================== #
@@ -68,9 +68,10 @@ class CityModel(Model):
         # ── Waste management service ─────────────────────────────────
         WasteManager.reset()             # ensure clean singleton on reset
         self.waste = WasteManager(self)
-
+        self.factory = AgentFactory(self)
         # ── Dummy agent — keeps Mesa visualization happy ─────────────
         dummy = Agent(self)
+        self.factory.spawn_humans(2)
         self.grid.place_agent(dummy, (0, 0))
 
     # ------------------------------------------------------------------ #
@@ -97,7 +98,8 @@ class CityModel(Model):
 
     def get_cell_type(self, pos: tuple) -> str:
         """Return the string cell type at pos."""
-        numeric = self.cell_types.get_cell(pos)
+        x, y    = pos
+        numeric = self.cell_types.data[x][y]  # ← direct array access
         return {v: k for k, v in CELL_TYPE_MAP.items()}.get(numeric, "building")
 
     def is_walkable(self, pos: tuple) -> bool:
@@ -111,8 +113,11 @@ class CityModel(Model):
     # ------------------------------------------------------------------ #
 
     def step(self) -> None:
-        """Advance simulation by one tick."""
+        humans = [a for a in self.agents if isinstance(a, HumanAgent)]
+        print(f"Humans on grid: {len(humans)}, waste={self.waste.get_stats()['waste_on_streets']}")
         self.agents.shuffle_do("step")
+        if len(humans) == 0:
+            self.factory.spawn_humans(20)
 
 
 # ================================================================== #
@@ -130,7 +135,19 @@ def propertylayer_portrayal(layer):
         )
 
 def agent_portrayal(agent):
-    return AgentPortrayalStyle(color="black", marker="o", size=1, alpha=0)
+    if isinstance(agent, HumanAgent):
+        return {
+            "color":  "white",  # bright blue — stands out on all backgrounds
+            "marker": "o",
+            "size":   250,
+            "zorder": 3,
+        }
+    return {
+        "color":  "black",
+        "marker": "o",
+        "size":   1,
+        "zorder": 1,
+    }
 
 def make_figure_bigger(ax):
     ax.figure.set_size_inches(16, 16)
@@ -148,7 +165,9 @@ def make_city_map(model):
         aspect="equal"
     )
     ax.set_title("City Map", fontsize=16)
-    solara.FigureMatplotlib(fig, dependencies=[])
+
+    with solara.Column():                                    # ← wrap here
+        solara.FigureMatplotlib(fig, dependencies=[])
     plt.close(fig)
 
 
@@ -158,9 +177,24 @@ def make_city_map(model):
 
 model_instance = CityModel()
 
+space_component = make_mpl_space_component(
+    agent_portrayal=agent_portrayal,
+    propertylayer_portrayal=propertylayer_portrayal,
+    post_process=make_figure_bigger,
+)
+
 page = SolaraViz(
     model_instance,
-    components=[make_city_map]
+    components=[space_component]
 )
 
 Page = page
+
+# Temporary test — remove after confirming
+print("Bins found:", len(model_instance.waste.bins))
+print("Containers found:", len(model_instance.waste.containers))
+print("Stats:", model_instance.waste.get_stats())
+
+
+print("(0,0) walkable?", model_instance.is_walkable((0, 0)))    # should be True (road)
+print("(6,6) walkable?", model_instance.is_walkable((6, 6))) 

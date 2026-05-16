@@ -8,7 +8,11 @@ ATTRACTIVE = "attractive"
 BIN = "bin"
 CONTAINER = "container"
 DISPOSAL = "disposal"
-
+DOOR = "door"
 # Grid size (can be tuned later)
-GRID_WIDTH = 30
-GRID_HEIGHT = 30
+GRID_WIDTH = 80
+GRID_HEIGHT = 80
+ROAD_WIDTH = 2
+BLOCK_SIZE = 12
+NUM_BLOCKS = 5
+MARGIN     = 4

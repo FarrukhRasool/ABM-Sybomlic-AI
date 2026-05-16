@@ -7,12 +7,16 @@ You are assisting with an academic final project titled:
 
 **“Waste in the City – Agent-Based Model”**
 
-### ✅ Fixed Technical Stack
+### ✅ Technical Stack (not locked)
 - Language: Python
 - Framework: Mesa (Agent-Based Modeling)
 - Grid: MultiGrid
-- Scheduler: RandomActivation
 - Time model: Discrete simulation ticks
+
+The stack is **not** locked. No specific Mesa version is pinned and no
+particular scheduler is mandated — adapt to whatever Mesa version is
+installed (e.g. Mesa 3.x uses `model.agents` / `AgentSet` instead of
+`RandomActivation`). Do not block dependency upgrades or force a downgrade.
 
 ### ✅ Core Responsibilities
 1. Follow the existing **component diagram**, **use case diagram**, and **sequence diagram** exactly

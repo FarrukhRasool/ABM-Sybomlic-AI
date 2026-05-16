@@ -1,5 +1,6 @@
 
 from mesa import Model, Agent
+import solara
 from mesa.space import MultiGrid, PropertyLayer
 from mesa.visualization import SolaraViz
 from mesa.visualization.components import PropertyLayerStyle, AgentPortrayalStyle
@@ -7,6 +8,10 @@ from mesa.visualization.components.matplotlib_components import make_mpl_space_c
 from constants import *
 from CityGridBuilder import CityGridBuilder
 from matplotlib.colors import ListedColormap
+import matplotlib                    # ← this was missing
+matplotlib.use("Agg")               # ← must come right after import matplotlib
+import matplotlib.pyplot as plt     # ← must come AFTER matplotlib.use()
+import numpy as np
 
 CELL_TYPE_MAP = {
     "road":       0.0,
@@ -51,9 +56,10 @@ class CityModel(Model):
     def _build_city_grid(self):
         builder = CityGridBuilder(GRID_WIDTH, GRID_HEIGHT)
         city_grid = builder.build()
-        for x in range(GRID_WIDTH):
-            for y in range(GRID_HEIGHT):
-                self.cell_types.set_cell((x, y), CELL_TYPE_MAP.get(city_grid[x][y], 1.0))
+        data = np.array([[CELL_TYPE_MAP.get(city_grid[x][y], 1.0)
+                        for y in range(GRID_HEIGHT)]
+                        for x in range(GRID_WIDTH)], dtype=float)
+        self.cell_types.data[:] = data
 
     def get_cell_type(self, pos):
         numeric = self.cell_types.get_cell(pos)
@@ -77,12 +83,36 @@ def agent_portrayal(agent):
 
 model_instance = CityModel()
 
-space_component = make_mpl_space_component(
-    agent_portrayal=agent_portrayal,
-    propertylayer_portrayal=propertylayer_portrayal,
-)
+
+# space_component = make_mpl_space_component(
+#     agent_portrayal=agent_portrayal,
+#     propertylayer_portrayal=propertylayer_portrayal,
+# )
+
+# page = SolaraViz(
+#     model_instance,
+#     components=[space_component]
+# )
+
+def make_city_map(model):
+    fig, ax = plt.subplots(figsize=(100, 100))
+    
+    # Draw the property layer manually
+    data = model.cell_types.data.T  # transpose for correct orientation
+    ax.imshow(
+        data,
+        origin="lower",
+        cmap=CITY_CMAP,
+        vmin=0.0,
+        vmax=6.0,
+        interpolation="nearest",
+        aspect="equal"
+    )
+    ax.set_title("City Map", fontsize=16)
+    solara.FigureMatplotlib(fig, dependencies=[])
+    plt.close(fig)
 
 page = SolaraViz(
     model_instance,
-    components=[space_component]
+    components=[make_city_map]
 )

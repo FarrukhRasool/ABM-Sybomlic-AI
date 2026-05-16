@@ -12,10 +12,14 @@ from mesa.visualization.components.matplotlib_components import make_mpl_space_c
 from matplotlib.colors import ListedColormap
 
 from constants import *
+
 from CityGridBuilder import CityGridBuilder
 from waste.WasteManager import WasteManager
+
 from agents.AgentFactory import AgentFactory
 from agents.HumanAgent import HumanAgent
+from agents.TouristAgent import TouristAgent
+
 # ================================================================== #
 # Visualization config                                                 #
 # ================================================================== #
@@ -71,7 +75,8 @@ class CityModel(Model):
         self.factory = AgentFactory(self)
         # ── Dummy agent — keeps Mesa visualization happy ─────────────
         dummy = Agent(self)
-        self.factory.spawn_humans(2)
+        self.factory.spawn_humans(1)
+        self.factory.spawn_tourists(1)
         self.grid.place_agent(dummy, (0, 0))
 
     # ------------------------------------------------------------------ #
@@ -113,11 +118,9 @@ class CityModel(Model):
     # ------------------------------------------------------------------ #
 
     def step(self) -> None:
-        humans = [a for a in self.agents if isinstance(a, HumanAgent)]
-        print(f"Humans on grid: {len(humans)}, waste={self.waste.get_stats()['waste_on_streets']}")
         self.agents.shuffle_do("step")
-        if len(humans) == 0:
-            self.factory.spawn_humans(20)
+        # self.factory.respawn_humans_if_needed(minimum=1)
+        self.factory.respawn_tourists_if_needed(minimum=1)
 
 
 # ================================================================== #
@@ -135,11 +138,21 @@ def propertylayer_portrayal(layer):
         )
 
 def agent_portrayal(agent):
+    from agents.HumanAgent import HumanAgent
+    
+
     if isinstance(agent, HumanAgent):
         return {
-            "color":  "white",  # bright blue — stands out on all backgrounds
+            "color":  "white",
             "marker": "o",
             "size":   250,
+            "zorder": 3,
+        }
+    if isinstance(agent, TouristAgent):
+        return {
+            "color":  "black",
+            "marker": "o",    # star shape — tourists stand out
+            "size":   350,
             "zorder": 3,
         }
     return {
@@ -183,12 +196,16 @@ space_component = make_mpl_space_component(
     post_process=make_figure_bigger,
 )
 
-page = SolaraViz(
-    model_instance,
-    components=[space_component]
-)
+@solara.component
+def Page():
+    with solara.Column():
+        SolaraViz(
+            model_instance,
+            components=[space_component]
+        )
 
-Page = page
+page = Page
+Page = Page
 
 # Temporary test — remove after confirming
 print("Bins found:", len(model_instance.waste.bins))

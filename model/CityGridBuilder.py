@@ -88,43 +88,77 @@ class CityGridBuilder:
                 self.grid[bx_end - 1  ][by_end - 1] = DOOR
 
     def _carve_bins(self):
-        """Place BINS_PER_BLOCK bins randomly on road cells adjacent to each building block."""
+        """Place BINS_PER_BLOCK bins randomly on road cells adjacent to each building block.
+        Rules:
+        - No two bins on the same side of a block
+        - Bins cannot be placed adjacent to door cells
+        """
         for col, (bx_start, bx_end) in enumerate(self.blocks):
             for row, (by_start, by_end) in enumerate(self.blocks):
                 if self._is_park_block(col, row):
                     continue
 
-                # Collect all road cells directly bordering this block
-                candidates = []
+                # Collect candidates per side separately
+                sides = {
+                    "bottom": [],
+                    "top":    [],
+                    "left":   [],
+                    "right":  [],
+                }
 
                 # Bottom road strip (y = by_start - 1)
                 if by_start - 1 >= 0:
                     for x in range(bx_start, bx_end):
-                        if self.grid[x][by_start - 1] == ROAD:
-                            candidates.append((x, by_start - 1))
+                        pos = (x, by_start - 1)
+                        if self.grid[x][by_start - 1] == ROAD and \
+                        not self._is_near_door(x, by_start - 1):
+                            sides["bottom"].append(pos)
 
                 # Top road strip (y = by_end)
                 if by_end < self.height:
                     for x in range(bx_start, bx_end):
-                        if self.grid[x][by_end] == ROAD:
-                            candidates.append((x, by_end))
+                        pos = (x, by_end)
+                        if self.grid[x][by_end] == ROAD and \
+                        not self._is_near_door(x, by_end):
+                            sides["top"].append(pos)
 
                 # Left road strip (x = bx_start - 1)
                 if bx_start - 1 >= 0:
                     for y in range(by_start, by_end):
-                        if self.grid[bx_start - 1][y] == ROAD:
-                            candidates.append((bx_start - 1, y))
+                        pos = (bx_start - 1, y)
+                        if self.grid[bx_start - 1][y] == ROAD and \
+                        not self._is_near_door(bx_start - 1, y):
+                            sides["left"].append(pos)
 
                 # Right road strip (x = bx_end)
                 if bx_end < self.width:
                     for y in range(by_start, by_end):
-                        if self.grid[bx_end][y] == ROAD:
-                            candidates.append((bx_end, y))
+                        pos = (bx_end, y)
+                        if self.grid[bx_end][y] == ROAD and \
+                        not self._is_near_door(bx_end, y):
+                            sides["right"].append(pos)
 
-                # Pick BINS_PER_BLOCK random road cells
-                chosen = self.rng.sample(candidates, min(BINS_PER_BLOCK, len(candidates)))
-                for (x, y) in chosen:
-                    self.grid[x][y] = BIN
+                # Pick one bin per side, from different sides only
+                available_sides = [s for s in sides.values() if len(s) > 0]
+                self.rng.shuffle(available_sides)  # randomize side order
+
+                placed = 0
+                for side_candidates in available_sides:
+                    if placed >= BINS_PER_BLOCK:
+                        break
+                    chosen = self.rng.choice(side_candidates)
+                    self.grid[chosen[0]][chosen[1]] = BIN
+                    placed += 1
+
+    def _is_near_door(self, x, y):
+        """Return True if (x, y) is adjacent to a DOOR cell."""
+        for dx in [-1, 0, 1]:
+            for dy in [-1, 0, 1]:
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < self.width and 0 <= ny < self.height:
+                    if self.grid[nx][ny] == DOOR:
+                        return True
+        return False
 
     def _carve_containers(self):
         """Place containers at every other road intersection."""
@@ -141,12 +175,12 @@ class CityGridBuilder:
                             self.grid[cx][cy] = CONTAINER
 
     def _carve_disposal(self):
-        """Place disposal areas on two opposite sides of the city margin road."""
-        # Left side disposal — center of left margin
-        mid_y = self.height // 2
-        self.grid[1][mid_y]     = DISPOSAL
-        self.grid[1][mid_y + 1] = DISPOSAL
+        """Place disposal areas on left and right sides at city center height."""
+        mid_y     = self.height // 2
+        half_size = 4  # cells above and below center
 
-        # Right side disposal — center of right margin (opposite side)
-        self.grid[self.width - 2][mid_y]     = DISPOSAL
-        self.grid[self.width - 2][mid_y + 1] = DISPOSAL
+        for dy in range(-half_size, half_size + 1):
+            # Left side
+            self.grid[1][mid_y + dy] = DISPOSAL
+            # Right side
+            self.grid[self.width - 2][mid_y + dy] = DISPOSAL

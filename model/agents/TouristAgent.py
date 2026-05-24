@@ -30,10 +30,10 @@ class TouristAgent(BaseAgent):
 
     def __init__(self, model, start_pos: tuple):
         super().__init__(model)
-        self.carrying_waste  = False
+        self.carrying_extra_waste  = False
         self._last_pos       = None
         self._steps_taken    = 0                                    # visit timer
-        self._max_waste      = random.randint(
+        self._max_extra_waste      = random.randint(
             self.MAX_WASTE_MIN, self.MAX_WASTE_MAX
         )
         self._waste_dropped  = 0
@@ -62,8 +62,8 @@ class TouristAgent(BaseAgent):
 
         can_generate = (
             random.random() < self.WASTE_PROBABILITY and
-            self._waste_dropped < self._max_waste and
-            not self.carrying_waste
+            self._waste_dropped < self._max_extra_waste and
+            not self.carrying_extra_waste
         )
 
         return {
@@ -73,7 +73,7 @@ class TouristAgent(BaseAgent):
             "road_neighbors":  road_neighbors,
             "visit_over":      self._steps_taken >= self.VISIT_DURATION,
             "nearest_bin":     near_bin,
-            "carrying_waste":  self.carrying_waste,
+            "carrying_extra_waste":  self.carrying_extra_waste,
             "generate_waste":  can_generate,
         }
 
@@ -87,13 +87,13 @@ class TouristAgent(BaseAgent):
         if observation["generate_waste"]:
             bin_pos = observation["nearest_bin"]
             if bin_pos:
-                self.carrying_waste = True
+                self.carrying_extra_waste = True
                 return {"action": "move_to_bin", "target": bin_pos}
             else:
                 return {"action": "drop_waste"}
 
         # Already carrying waste
-        if observation["carrying_waste"]:
+        if observation["carrying_extra_waste"]:
             bin_pos = observation["nearest_bin"]
             if bin_pos and self.pos == bin_pos:
                 return {"action": "deposit_bin", "bin_pos": bin_pos}
@@ -121,7 +121,7 @@ class TouristAgent(BaseAgent):
             if self.model.waste.is_wasteable(self.pos) and self._can_drop_more():
                 self.model.waste.add_waste(self.pos)
                 self._waste_dropped += 1
-            self.carrying_waste = False
+            self.carrying_extra_waste = False
             self._wander(
                 decision.get("park_neighbors", []),
                 decision.get("road_neighbors", []),
@@ -137,7 +137,7 @@ class TouristAgent(BaseAgent):
                 if self.model.waste.is_wasteable(self.pos) and self._can_drop_more():
                     self.model.waste.add_waste(self.pos)
                     self._waste_dropped += 1
-            self.carrying_waste = False
+            self.carrying_extra_waste = False
 
         elif action == "wander":
             self._wander(
@@ -151,7 +151,7 @@ class TouristAgent(BaseAgent):
     # ------------------------------------------------------------------ #
 
     def _can_drop_more(self) -> bool:
-        return self._waste_dropped < self._max_waste
+        return self._waste_dropped < self._max_extra_waste
 
     def _wander(self, park_neighbors: list, road_neighbors: list, all_neighbors: list) -> None:
         """

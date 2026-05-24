@@ -118,9 +118,40 @@ class CityModel(Model):
     # ------------------------------------------------------------------ #
 
     def step(self) -> None:
-        self.agents.shuffle_do("step")
+        # self.agents.shuffle_do("step")
         # self.factory.respawn_humans_if_needed(minimum=1)
-        self.factory.respawn_tourists_if_needed(minimum=1)
+        # self.factory.respawn_tourists_if_needed(minimum=1)
+        humans = [a for a in self.agents if isinstance(a, HumanAgent)]
+        def manhattan(a, b):
+            return abs(a[0] - b[0]) + abs(a[1] - b[1])
+        humans = [a for a in self.agents if isinstance(a, HumanAgent)]
+
+        for h in humans:
+            # Check if human is near any bin
+            for bin_pos, bin_obj in self.waste.bins.items():  # ← self.waste.bins
+                if manhattan(h.pos, bin_pos) <= 1:
+                    print(
+                        f"🚶 Human at {h.pos} | "
+                        f"Bin {bin_pos} [{bin_obj.level}/{bin_obj.capacity}] | "
+                        f"Default units remaining: {h.waste_units}/5 | "
+                        f"Extra waste generated: {h._waste_dropped}/{h._max_extra_waste} | "
+                        f"Carrying extra waste: {h.carrying_extra_waste}"
+                    )
+            if h.carrying_extra_waste:
+                print(f"🗑️  Holding extra litter: pos={h.pos} dest={h.destination}")
+
+        # Print any bin that has waste in it
+        for bin_pos, bin_obj in self.waste.bins.items():  # ← self.waste.bins
+            if bin_obj.level > 0:
+                print(f"📦 Bin {bin_pos} → level={bin_obj.level}/{bin_obj.capacity}")
+
+        self.agents.shuffle_do("step")
+
+        if len(humans) == 0:
+            self.factory.spawn_humans(1)
+
+
+
 
 
 # ================================================================== #

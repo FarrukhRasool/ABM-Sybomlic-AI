@@ -6,9 +6,10 @@ import solara
 
 from mesa import Model, Agent
 from mesa.space import MultiGrid, PropertyLayer
-from mesa.visualization import SolaraViz
 from mesa.visualization.components import PropertyLayerStyle, AgentPortrayalStyle
 from mesa.visualization.components.matplotlib_components import make_mpl_space_component
+from mesa.datacollection import DataCollector
+from mesa.visualization import SolaraViz, make_plot_component
 from matplotlib.colors import ListedColormap
 
 from constants import *
@@ -19,6 +20,12 @@ from waste.WasteManager import WasteManager
 from agents.AgentFactory import AgentFactory
 from agents.HumanAgent import HumanAgent
 from agents.TouristAgent import TouristAgent
+from agents.CleanerStreetAgent import CleanerStreetAgent
+from agents.CleanerParkAgent import CleanerParkAgent
+from agents.BinTransporterAgent import BinTransporterAgent
+from agents.ContainerTransporterAgent import ContainerTransporterAgent
+from agents.ModelCitizenAgent import ModelCitizenAgent
+
 
 # ================================================================== #
 # Visualization config                                                 #
@@ -33,7 +40,10 @@ CITY_CMAP = ListedColormap([
     "orange",       # 5.0 container
     "red",          # 6.0 disposal
     "crimson",      # 7.0 waste
-])
+    #"purple",      # 8.0 cleanerstreet
+    #"yellow",      # 10.0 bintranspoter
+    #"cyan",        # 11.0 modelcitizen
+ ])
 
 
 # ================================================================== #
@@ -75,9 +85,29 @@ class CityModel(Model):
         self.factory = AgentFactory(self)
         # ── Dummy agent — keeps Mesa visualization happy ─────────────
         dummy = Agent(self)
-        self.factory.spawn_humans(1)
-        self.factory.spawn_tourists(1)
+        self.factory.spawn_humans(8)
+        self.factory.spawn_tourists(3)
+        self.factory.spawn_one_cleaner_per_vertical_street()
+        self.factory.spawn_one_cleaner_per_horizontal_street()
+        self.factory.spawn_park_cleaners_five_sectors(capacity=3)
+        self.factory.spawn_bin_transporters_by_building_column(capacity=5)
+        self.factory.spawn_container_transporter_simple(capacity=5)
+        self.factory.spawn_model_citizens(count=1, capacity=3)
         self.grid.place_agent(dummy, (0, 0))
+
+        # Ploting waste gestion
+        self.datacollector = DataCollector(
+            model_reporters={
+                "total_deposited": lambda m: m.waste.total_deposited,
+                "total_cleaned": lambda m: m.waste.total_cleaned,
+                "waste_on_streets": lambda m: int(m.waste.waste_grid.sum()),
+                "full_bins": lambda m: sum(1 for b in m.waste.bins.values() if b.is_full),
+                "full_containers": lambda m: sum(1 for c in m.waste.containers.values() if c.is_full),
+            }
+        )
+
+        self.datacollector.collect(self)
+        
 
     # ------------------------------------------------------------------ #
     # Setup                                                                #
@@ -120,7 +150,8 @@ class CityModel(Model):
     def step(self) -> None:
         self.agents.shuffle_do("step")
         # self.factory.respawn_humans_if_needed(minimum=1)
-        self.factory.respawn_tourists_if_needed(minimum=1)
+        
+        self.datacollector.collect(self)
 
 
 # ================================================================== #
@@ -155,6 +186,41 @@ def agent_portrayal(agent):
             "size":   350,
             "zorder": 3,
         }
+    if isinstance(agent, CleanerStreetAgent):
+        return{
+            "color": "purple",
+            "marker": "o",
+            "size": 350,
+            "zorder": 3,
+        }
+    if isinstance(agent, CleanerParkAgent):
+        return {
+            "color": "purple",
+            "marker": "0",
+            "size": 350,
+            "zorder": 4,
+        }
+    if isinstance(agent, BinTransporterAgent):
+        return {
+            "color":  "yellow",
+            "marker": "o",
+            "size":   350,
+            "zorder": 5,
+        }
+    if isinstance(agent, ContainerTransporterAgent):
+        return{
+            "color": "yellow",
+            "marker": "o",
+            "size": 350,
+            "zorder": 5,
+        }
+    if isinstance(agent, ModelCitizenAgent):
+        return {
+            "color":  "red",
+            "marker": "o",
+            "size":   350,
+            "zorder": 6,
+        }
     return {
         "color":  "black",
         "marker": "o",
@@ -162,8 +228,9 @@ def agent_portrayal(agent):
         "zorder": 1,
     }
 
+
 def make_figure_bigger(ax):
-    ax.figure.set_size_inches(16, 16)
+    ax.figure.set_size_inches(20, 20)
 
 def make_city_map(model):
     fig, ax = plt.subplots(figsize=(20, 20))
@@ -196,22 +263,126 @@ space_component = make_mpl_space_component(
     post_process=make_figure_bigger,
 )
 
+waste_plot_component = make_plot_component(
+    {
+        "total_deposited": "red",
+        "total_cleaned": "green",
+        "waste_on_streets": "orange",
+        "full_bins": "blue",
+        "full_containers": "purple",
+    }
+)
+
+@solara.component
+def WasteStatsComponent(model):
+    df = model.datacollector.get_model_vars_dataframe().copy()
+    print("GRAPH UPDATED")
+    print(df.tail())
+
+    fig, ax = plt.subplots(figsize=(10, 7))
+
+    cols = ["total_deposited", "total_cleaned", "waste_on_streets"]
+    labels = {
+        "total_deposited": "Déchets produits",
+        "total_cleaned": "Déchets ramassés",
+        "waste_on_streets": "Déchets sur routes",
+    }
+    colors = {
+        "total_deposited": "red",
+        "total_cleaned": "green",
+        "waste_on_streets": "orange",
+    }
+    markers = {
+        "total_deposited": "o",
+        "total_cleaned": "s",
+        "waste_on_streets": "^",
+    }
+    linestyles = {
+        "total_deposited": "--",
+        "total_cleaned": "-",
+        "waste_on_streets": ":",
+    }
+
+    if not df.empty:
+        x = list(df.index)
+
+        for col in cols:
+            y = df[col].tolist()
+            ax.plot(
+                x,
+                y,
+                label=labels[col],
+                color=colors[col],
+                linewidth=2.5,
+                marker=markers[col],
+                markersize=5,
+                linestyle=linestyles[col],
+                alpha=0.9,
+            )
+
+            # highlight last point
+            ax.scatter(x[-1], y[-1], color=colors[col], s=70, zorder=5)
+
+        x_max = max(10, len(df) - 1)
+        y_max = max(5, int(df[cols].max().max()))
+    else:
+        x_max = 10
+        y_max = 5
+
+    # origine en bas à gauche
+    ax.set_xlim(0, x_max)
+    ax.set_ylim(0, y_max + 1)
+
+    ax.set_title("Gestion des déchets", fontsize=16)
+    ax.set_xlabel("Temps", fontsize=12)
+    ax.set_ylabel("Quantité", fontsize=12)
+    ax.legend(fontsize=10, loc="upper left")
+    ax.grid(True, alpha=0.3)
+
+    ax.set_xticks(range(0, x_max + 1, max(1, x_max // 5)))
+    ax.set_yticks(range(0, y_max + 2, max(1, (y_max + 1) // 5)))
+
+    fig.tight_layout()
+
+    # petit résumé en texte dans la figure
+    if not df.empty:
+        last = df.iloc[-1]
+        summary = (
+            f"Produit: {int(last['total_deposited'])}\n"
+            f"Ramassé: {int(last['total_cleaned'])}\n"
+            f"Routes: {int(last['waste_on_streets'])}\n"
+            f"Bins pleines: {int(last['full_bins'])}\n"
+            f"Containers pleins: {int(last['full_containers'])}"
+        )
+        ax.text(
+            0.98, 0.02,
+            summary,
+            transform=ax.transAxes,
+            fontsize=10,
+            va="bottom",
+            ha="right",
+            bbox=dict(boxstyle="round", facecolor="white", alpha=0.8)
+        )
+
+    solara.FigureMatplotlib(fig)
+    plt.close(fig)
+
+
 @solara.component
 def Page():
-    with solara.Column():
-        SolaraViz(
-            model_instance,
-            components=[space_component]
-        )
+    SolaraViz(
+        model_instance,
+        components=[space_component, waste_plot_component]
+    )
 
 page = Page
 Page = Page
 
 # Temporary test — remove after confirming
-print("Bins found:", len(model_instance.waste.bins))
-print("Containers found:", len(model_instance.waste.containers))
-print("Stats:", model_instance.waste.get_stats())
+#print("Bins found:", len(model_instance.waste.bins))
+#print("Containers found:", len(model_instance.waste.containers))
+#print("Stats:", model_instance.waste.get_stats())
 
 
-print("(0,0) walkable?", model_instance.is_walkable((0, 0)))    # should be True (road)
-print("(6,6) walkable?", model_instance.is_walkable((6, 6))) 
+#print("(0,0) walkable?", model_instance.is_walkable((0, 0)))    # should be True (road)
+#print("(6,6) walkable?", model_instance.is_walkable((6, 6))) 

@@ -10,6 +10,10 @@ BIN        = "bin"
 CONTAINER  = "container"
 DISPOSAL   = "disposal"
 WASTE      = "waste"
+CLEANERSTREET = "cleanerstreet"
+CLEANERPARK = "cleanerpark"
+BINTRANSPORTER = 'bintransporter'
+MODELCITIZEN = 'modelcitizen'
 
 
 CELL_TYPE_MAP = {
@@ -21,6 +25,10 @@ CELL_TYPE_MAP = {
     "container":  5.0,
     "disposal":   6.0,
     "waste":      7.0,
+    #"cleanerstreet": 8.0,
+    #"cleanerpark": 9.0,
+    #'bintransporteur': 10.0,
+    #'modelcitizen': 11.0,
 }
 
 

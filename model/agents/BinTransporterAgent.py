@@ -7,12 +7,15 @@ from constants import BIN, CONTAINER
 
 class BinTransporterAgent(BaseAgent):
     """
-    Simple transporter:
-    - patrols on a predefined path
-    - if standing on a non-empty bin, empties it immediately
-    - when full, goes to nearest assigned container
-    - empties load into container
-    - returns to interruption point and resumes patrol
+    Transport agent dedicated to bin waste collection.
+
+    Main behavior:
+        - Patrol along a predefined route
+        - If standing on a non-empty bin, empty it immediately
+        - When full, go to the nearest assigned container
+        - Empty the carried load into the container
+        - Return to the exact interruption point
+        - Resume patrol from where it stopped
     """
 
     def __init__(
@@ -34,21 +37,32 @@ class BinTransporterAgent(BaseAgent):
         self.capacity = capacity
         self.load = 0
 
+        # Patrol progress
         self.path_index = 0
+
+        # Current mode:
         self.mode = "patrol"
 
+        # Temporary path
         self.temp_path = []
+
+        # Memory of the exact interruption point
         self.resume_target = None
         self.resume_position = None
         self.resume_index = None
 
+        # Current unloading target container
         self.target_container = None
 
-    # ------------------------------------------------------------------
-    # ABM logic
-    # ------------------------------------------------------------------
+
+    # ==================================================================
+    # ABM logic: perceive -> decide -> act
+    # ==================================================================
 
     def perceive(self) -> dict:
+        """
+        Observe the local environment.
+        """
         current_bin = self.model.waste.bins.get(self.pos, None)
         current_container = self.model.waste.containers.get(self.pos, None)
 
@@ -65,6 +79,16 @@ class BinTransporterAgent(BaseAgent):
         }
 
     def decide(self, obs: dict) -> dict:
+        """
+        Select the next action based on local observations and internal mode.
+
+        Decision priorities:
+            1. If currently going to a container, continue until unloading
+            2. If currently returning to patrol, continue return
+            3. If full, leave patrol and go to a container
+            4. If standing on a non-empty bin, empty it immediately
+            5. Otherwise continue patrol
+        """
         if self.mode == "to_container":
             if obs["at_container"]:
                 return {"action": "empty_into_container"}
@@ -84,6 +108,16 @@ class BinTransporterAgent(BaseAgent):
         return {"action": "patrol"}
 
     def act(self, decision: dict) -> None:
+        """
+        Execute the selected action.
+
+        Supported actions:
+            - empty_bin_here : empty the current bin
+            - go_to_container : save the exact interruption point of the patrol
+            - empty_into_container : empty carried waste at target container
+            - return_to_patrol : restore the interruption point
+            - patrol : step
+        """
         action = decision["action"]
 
         if action == "empty_bin_here":
@@ -150,59 +184,28 @@ class BinTransporterAgent(BaseAgent):
         elif action == "patrol":
             self._patrol_step()
 
-        #print(
-            #"[BinTransporterAgent]",
-            #"id=", self.unique_id,
-            #"mode=", self.mode,
-            #"action=", action,
-            #"pos=", self.pos,
-            #"load=", f"{self.load}/{self.capacity}",
-            #"path_index=", self.path_index
-        #)
+        # ------------------------------------------------------------
+        # Debug : Check the states of the agent 
+        # ------------------------------------------------------------
+        print(
+            "[BinTransporterAgent]",
+            "id=", self.unique_id,
+            "mode=", self.mode,
+            "action=", action,
+            "pos=", self.pos,
+            "load=", f"{self.load}/{self.capacity}",
+            "path_index=", self.path_index
+        )
 
-    # ------------------------------------------------------------------
-    # Patrol logic
-    # ------------------------------------------------------------------
-
-    def _patrol_step(self) -> None:
-        if not self.patrol_path:
-            return
-
-        target = self.patrol_path[self.path_index]
-
-        if self.pos == target:
-            self.path_index = (self.path_index + 1) % len(self.patrol_path)
-            target = self.patrol_path[self.path_index]
-
-        if self._is_adjacent(self.pos, target):
-            self.move_to(target)
-        else:
-            path = self._bfs_path(self.pos, target)
-            if len(path) >= 2:
-                self.move_to(path[1])
-
-    # ------------------------------------------------------------------
-    # Temporary path following
-    # ------------------------------------------------------------------
-
-    def _follow_temp_path(self) -> None:
-        if not self.temp_path:
-            return
-
-        if self.temp_path and self.temp_path[0] == self.pos:
-            self.temp_path.pop(0)
-
-        if not self.temp_path:
-            return
-
-        next_pos = self.temp_path.pop(0)
-        self.move_to(next_pos)
-
-    # ------------------------------------------------------------------
-    # Helpers
-    # ------------------------------------------------------------------
+    
+    # ==================================================================
+    # Helper functions
+    # ==================================================================
 
     def _nearest_container(self, start: tuple):
+        """
+         Return the nearest assigned container to the given position.
+        """
         if not self.assigned_containers:
             return None
 
@@ -211,58 +214,8 @@ class BinTransporterAgent(BaseAgent):
             key=lambda p: abs(p[0] - start[0]) + abs(p[1] - start[1])
         )
 
-    def _bfs_path(self, start: tuple, goal: tuple) -> list[tuple]:
-        if goal is None:
-            return []
 
-        if start == goal:
-            return [start]
+    
 
-        queue = deque([start])
-        visited = {start}
-        parents = {start: None}
+    
 
-        while queue:
-            current = queue.popleft()
-
-            for neighbor in self._walkable_neighbors(current):
-                if neighbor in visited:
-                    continue
-
-                visited.add(neighbor)
-                parents[neighbor] = current
-
-                if neighbor == goal:
-                    return self._reconstruct_path(parents, goal)
-
-                queue.append(neighbor)
-
-        return []
-
-    def _walkable_neighbors(self, pos: tuple) -> list[tuple]:
-        x, y = pos
-        candidates = [
-            (x + 1, y),
-            (x - 1, y),
-            (x, y + 1),
-            (x, y - 1),
-        ]
-
-        valid = []
-        for nx, ny in candidates:
-            if 0 <= nx < self.model.grid.width and 0 <= ny < self.model.grid.height:
-                if self.model.is_walkable((nx, ny)):
-                    valid.append((nx, ny))
-        return valid
-
-    def _reconstruct_path(self, parents: dict, goal: tuple) -> list[tuple]:
-        path = []
-        current = goal
-        while current is not None:
-            path.append(current)
-            current = parents[current]
-        path.reverse()
-        return path
-
-    def _is_adjacent(self, a: tuple, b: tuple) -> bool:
-        return abs(a[0] - b[0]) + abs(a[1] - b[1]) == 1

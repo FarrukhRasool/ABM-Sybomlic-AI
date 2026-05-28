@@ -7,14 +7,20 @@ from constants import WASTE
 
 class ModelCitizenAgent(BaseAgent):
     """
-    A prosocial citizen:
-    - wanders randomly through the city
-    - picks up waste on the ground
-    - when full, goes to the nearest available bin
-    - empties load into the bin
-    - resumes wandering
+    Prosocial citizen agent.
+
+    Main behavior:
+        - Wander randomly through the city
+        - Pick up waste found on the ground
+        - When full, go to the nearest available bin
+        - Deposit collected waste into the bin
+        - Resume wandering afterward
     """
 
+
+    # ==================================================================
+    # Initialization
+    # ==================================================================
     def __init__(self, model, start_pos: tuple[int, int], capacity: int = 3):
         super().__init__(model)
 
@@ -22,15 +28,20 @@ class ModelCitizenAgent(BaseAgent):
         self.capacity = capacity
         self.load = 0
 
+        # Current activity mode
         self.mode = "wander"   # wander / to_bin
+        # Memory
         self._last_pos = None
 
-    # ------------------------------------------------------------------
-    # ABM logic
-    # ------------------------------------------------------------------
+    # ==================================================================
+    # ABM logic: perceive -> decide -> act
+    # ==================================================================
 
     def perceive(self) -> dict:
-        neighbors = self.get_walkable_neighbors()
+        """
+        Observe the local environment.
+        """
+        neighbors = self._walkable_neighbors(self.pos) #get_walkable_neighbors()
 
         # nearest available bin
         available_bins = [
@@ -49,6 +60,15 @@ class ModelCitizenAgent(BaseAgent):
         }
 
     def decide(self, obs: dict) -> dict:
+        """
+        Select the next action based on local observations and internal mode.
+
+        Decision priorities:
+            1. If full, go to a bin or deposit immediately if already on one
+            2. If not full and standing on waste, pick it up
+            3. If carrying waste and already standing on a bin, deposit it
+            4. Otherwise, continue wandering
+        """
         # If full, try to go to a bin
         if obs["is_full"]:
             if obs["at_bin"]:
@@ -72,6 +92,15 @@ class ModelCitizenAgent(BaseAgent):
         return {"action": "wander"}
 
     def act(self, decision: dict) -> None:
+        """
+        Execute the selected action.
+
+        Supported actions:
+            - pick_here : pick one unit of waste from the current cell
+            - go_to_bin : move one step toward the selected target bin
+            - deposit_here : deposit carried waste into the current bin
+            - wander : random exploration of the city
+        """
         action = decision["action"]
 
         if action == "pick_here":
@@ -95,6 +124,9 @@ class ModelCitizenAgent(BaseAgent):
         elif action == "wander":
             self._wander()
 
+        # ------------------------------------------------------------
+        # Debug : Check the states of the agent 
+        # ------------------------------------------------------------
         print(
             "[ModelCitizenAgent]",
             "id=", self.unique_id,
@@ -104,15 +136,19 @@ class ModelCitizenAgent(BaseAgent):
             "load=", f"{self.load}/{self.capacity}"
         )
 
-    # ------------------------------------------------------------------
-    # Helpers
-    # ------------------------------------------------------------------
+    # ==================================================================
+    # Movement helpers
+    # ==================================================================
 
     def _wander(self) -> None:
         """
-        Random movement with light anti-oscillation.
+        Move randomly to a walkable neighboring cell
+
+        Anti-oscillation rule:
+            The agent avoids immediately returning to its last position
+            if another move is available.
         """
-        neighbors = self.get_walkable_neighbors()
+        neighbors = self._walkable_neighbors(self.pos) #get_walkable_neighbors()
         if not neighbors:
             return
 
@@ -127,7 +163,7 @@ class ModelCitizenAgent(BaseAgent):
         """
         Greedy one-step movement toward target, avoiding immediate backtracking.
         """
-        neighbors = self.get_walkable_neighbors()
+        neighbors = self._walkable_neighbors(self.pos) #get_walkable_neighbors()
         if not neighbors:
             return
 

@@ -27,9 +27,9 @@ from agents.ContainerTransporterAgent import ContainerTransporterAgent
 from agents.ModelCitizenAgent import ModelCitizenAgent
 
 
-# ================================================================== #
-# Visualization config                                                 #
-# ================================================================== #
+# ==================================================================
+# Visualization configuration
+# ==================================================================
 
 CITY_CMAP = ListedColormap([
     "lightgrey",    # 0.0 road
@@ -47,18 +47,20 @@ CITY_CMAP = ListedColormap([
 
 
 # ================================================================== #
-# Model                                                                #
+# Model                                                                
 # ================================================================== #
 
 class CityModel(Model):
     """
     The city simulation model.
 
-    Responsibilities:
-        - Own the grid and property layer
-        - Initialize all infrastructure via CityGridBuilder
-        - Own the WasteManager service
-        - Orchestrate agent steps each tick
+    Main responsibilities:
+        - Create and store the semantic city grid
+        - Initialize the city layout through CityGridBuilder
+        - Create and store the WasteManager service
+        - Create agents through AgentFactory
+        - Execute one simulation step for all agents
+        - Collect global statistics for visualization
     """
 
     def __init__(self, **kwargs):
@@ -83,19 +85,20 @@ class CityModel(Model):
         WasteManager.reset()             # ensure clean singleton on reset
         self.waste = WasteManager(self)
         self.factory = AgentFactory(self)
-        # ── Dummy agent — keeps Mesa visualization happy ─────────────
+
+        # ── Agent creation ───────────────────────────────────────────
         dummy = Agent(self)
-        self.factory.spawn_humans(8)
-        self.factory.spawn_tourists(3)
+        self.factory.spawn_humans(1)    
+        self.factory.spawn_tourists(1)
         self.factory.spawn_one_cleaner_per_vertical_street()
         self.factory.spawn_one_cleaner_per_horizontal_street()
-        self.factory.spawn_park_cleaners_five_sectors(capacity=3)
-        self.factory.spawn_bin_transporters_by_building_column(capacity=5)
-        self.factory.spawn_container_transporter_simple(capacity=5)
-        self.factory.spawn_model_citizens(count=1, capacity=3)
+        self.factory.spawn_park_cleaners_five_sectors(capacity=1)
+        self.factory.spawn_bin_transporters_by_building_column(capacity=1)
+        self.factory.spawn_container_transporter_simple(capacity=1)
+        self.factory.spawn_model_citizens(count=1, capacity=1)
         self.grid.place_agent(dummy, (0, 0))
 
-        # Ploting waste gestion
+        # ── Ploting waste gestion ──────────────────────────────────────
         self.datacollector = DataCollector(
             model_reporters={
                 "total_deposited": lambda m: m.waste.total_deposited,
@@ -106,15 +109,17 @@ class CityModel(Model):
             }
         )
 
-        self.datacollector.collect(self)
-        
+        self.datacollector.collect(self)    
 
-    # ------------------------------------------------------------------ #
-    # Setup                                                                #
-    # ------------------------------------------------------------------ #
+
+    # ==================================================================
+    # Model setup helpers
+    # ==================================================================
 
     def _build_city_grid(self) -> None:
-        """Build city layout and write it to the PropertyLayer."""
+        """
+        Build city layout and write it to the PropertyLayer.
+        """
         builder   = CityGridBuilder(GRID_WIDTH, GRID_HEIGHT)
         city_grid = builder.build()
 
@@ -127,38 +132,47 @@ class CityModel(Model):
         )
         self.cell_types.data[:] = data
 
-    # ------------------------------------------------------------------ #
-    # Helpers — used by agents                                            #
-    # ------------------------------------------------------------------ #
+    # ==================================================================
+    # Grid helper methods used by agents
+    # ==================================================================
 
     def get_cell_type(self, pos: tuple) -> str:
-        """Return the string cell type at pos."""
+        """
+        Return the string cell type at pos.
+        """
         x, y    = pos
         numeric = self.cell_types.data[x][y]  # ← direct array access
         return {v: k for k, v in CELL_TYPE_MAP.items()}.get(numeric, "building")
 
     def is_walkable(self, pos: tuple) -> bool:
-        """Return True if agents can walk on this cell."""
+        """
+        Return True if agents can walk on this cell.
+        """
         return self.get_cell_type(pos) in (
-            ROAD, ATTRACTIVE, DOOR, BIN, CONTAINER, DISPOSAL
+            ROAD, ATTRACTIVE, DOOR, BIN, CONTAINER, DISPOSAL, WASTE
         )
 
-    # ------------------------------------------------------------------ #
-    # Simulation step                                                      #
-    # ------------------------------------------------------------------ #
+    # ==================================================================
+    # Simulation step
+    # ==================================================================
 
     def step(self) -> None:
+        """
+        Execute one full simulation step.
+        """
         self.agents.shuffle_do("step")
-        # self.factory.respawn_humans_if_needed(minimum=1)
-        
+        self.factory.respawn_tourists_if_needed(minimum=1)
         self.datacollector.collect(self)
 
 
 # ================================================================== #
-# Visualization                                                        #
+# Visualization helpers                                                 #
 # ================================================================== #
 
 def propertylayer_portrayal(layer):
+    """
+    Define how the semantic property layer is visualized.
+    """
     if layer.name == "cell_types":
         return PropertyLayerStyle(
             colormap=CITY_CMAP,
@@ -169,9 +183,9 @@ def propertylayer_portrayal(layer):
         )
 
 def agent_portrayal(agent):
-    from agents.HumanAgent import HumanAgent
-    
-
+    """
+    Define how each agent type is displayed on the map.
+    """
     if isinstance(agent, HumanAgent):
         return {
             "color":  "white",
@@ -230,9 +244,15 @@ def agent_portrayal(agent):
 
 
 def make_figure_bigger(ax):
+    """
+    Post-processing helper to enlarge the city-map figure.
+    """
     ax.figure.set_size_inches(20, 20)
 
 def make_city_map(model):
+    """
+    Build a standalone Matplotlib figure of the city semantic layer.
+    """
     fig, ax = plt.subplots(figsize=(20, 20))
     data    = model.cell_types.data.T
     ax.imshow(
@@ -251,18 +271,21 @@ def make_city_map(model):
     plt.close(fig)
 
 
-# ================================================================== #
-# Entry point                                                          #
-# ================================================================== #
+# ==================================================================
+# Visualization entry point
+# ==================================================================
 
+# Global model instance used by SolaraViz
 model_instance = CityModel()
 
+# Space/map component
 space_component = make_mpl_space_component(
     agent_portrayal=agent_portrayal,
     propertylayer_portrayal=propertylayer_portrayal,
     post_process=make_figure_bigger,
 )
 
+# Standard Mesa plot component using DataCollector fields
 waste_plot_component = make_plot_component(
     {
         "total_deposited": "red",
@@ -275,6 +298,15 @@ waste_plot_component = make_plot_component(
 
 @solara.component
 def WasteStatsComponent(model):
+    """
+    Custom Matplotlib waste-statistics plot.
+
+    Displays:
+        - total waste produced
+        - total waste cleaned
+        - waste currently on streets
+        - current summary values
+    """
     df = model.datacollector.get_model_vars_dataframe().copy()
     print("GRAPH UPDATED")
     print(df.tail())
@@ -370,19 +402,27 @@ def WasteStatsComponent(model):
 
 @solara.component
 def Page():
+    """
+    Main Solara page for the simulation.
+
+    Current live view:
+        - city map
+        - waste-management plot (Mesa built-in plotting component)
+    """
     SolaraViz(
         model_instance,
         components=[space_component, waste_plot_component]
     )
 
+# Solara page export
 page = Page
 Page = Page
 
-# Temporary test — remove after confirming
-#print("Bins found:", len(model_instance.waste.bins))
-#print("Containers found:", len(model_instance.waste.containers))
-#print("Stats:", model_instance.waste.get_stats())
-
-
-#print("(0,0) walkable?", model_instance.is_walkable((0, 0)))    # should be True (road)
-#print("(6,6) walkable?", model_instance.is_walkable((6, 6))) 
+# ------------------------------------------------------------
+# Debug : Check the states of the simulation
+# ------------------------------------------------------------
+print("Bins found:", len(model_instance.waste.bins))
+print("Containers found:", len(model_instance.waste.containers))
+print("Stats:", model_instance.waste.get_stats())
+print("(0,0) walkable?", model_instance.is_walkable((0, 0)))    # should be True (road)
+print("(6,6) walkable?", model_instance.is_walkable((6, 6))) 

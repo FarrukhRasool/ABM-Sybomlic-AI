@@ -7,12 +7,23 @@ from constants import *
 
 class HumanAgent(BaseAgent):
     """
-    Represents a local resident moving between buildings.
+    Local resident agent moving from one building entrance to another.
+
+    Main behavior:
+        - Move toward a fixed destination
+        - Occasionally generate waste
+        - If a nearby bin is available, carry the waste toward it
+        - Otherwise, drop the waste on the road
+        - Disappear when the destination is reached
     """
 
     WASTE_PROBABILITY = 0.10
     MAX_WASTE_PER_TRIP = 3
 
+
+    # ==================================================================
+    # Initialization
+    # ==================================================================
     def __init__(self, model, start_pos: tuple, destination: tuple):
         super().__init__(model)
         self.destination    = destination
@@ -21,8 +32,16 @@ class HumanAgent(BaseAgent):
         self._max_waste       = random.randint(2, 3)
         self._waste_dropped   = 0 
 
+
+    # ==================================================================
+    # ABM logic: perceive -> decide -> act
+    # ==================================================================
+
     def perceive(self) -> dict:
-        neighbors = self.get_walkable_neighbors()
+        """
+        Observe the local state relevant to the cleaner's task.
+        """
+        neighbors = self._walkable_neighbors(self.pos) #get_walkable_neighbors()
 
         # Find nearest bin
         bins     = self.model.waste.bins
@@ -50,7 +69,18 @@ class HumanAgent(BaseAgent):
         }
 
     def decide(self, observation: dict) -> dict:
+        """
+        Select the next action based on local observations and internal mode.
 
+        Decision priorities:
+            1. If destination reached -> disappear
+            2. If waste is generated and a bin is nearby -> move toward bin
+            3. If waste is generated and no bin is nearby -> drop waste
+            4. If already carrying waste and at a bin -> deposit into bin
+            5. If already carrying waste and bin exists -> move toward bin
+            6. If already carrying waste and no bin exists -> drop waste
+            7. Otherwise continue toward destination
+        """
         # Reached destination → disappear
         if observation["at_destination"]:
             return {"action": "disappear"}
@@ -82,11 +112,17 @@ class HumanAgent(BaseAgent):
         # Default — move toward destination
         return {"action": "move", "target": self.destination}
 
-    def _can_drop_more_waste(self) -> bool:
-        """Return True if agent is still under waste limit."""
-        return self._waste_dropped < self._max_waste
-
     def act(self, decision: dict) -> None:
+        """
+        Execute the selected action.
+
+        Supported actions:
+            - disappear : human delete
+            - drop_waste : drop waste on the current cell if the surface allows it
+            - move_to_bin : move one step toward the target bin
+            - deposit_bin : deposit one unit into the bin
+            - move : continue moving toward the destination
+        """
         action = decision["action"]
 
         if action == "disappear":
@@ -114,17 +150,39 @@ class HumanAgent(BaseAgent):
         elif action == "move":
             self._move_toward(decision["target"])
 
-    # ------------------------------------------------------------------ #
-    # Private helpers                                                      #
-    # ------------------------------------------------------------------ #
+        # ------------------------------------------------------------
+        # Debug : Check the states of the agent 
+        # ------------------------------------------------------------
+        print(
+            "[HumanAgent]",
+            "id=", self.unique_id,
+            "action=", action,
+            "pos=", self.pos,
+            "destination=", self.destination,
+            "carrying_waste=", self.carrying_waste,
+            "waste_dropped=", self._waste_dropped
+        )
+
+
+    # ==================================================================
+    # Internal helpers
+    # ==================================================================
+    def _can_drop_more_waste(self) -> bool:
+        """
+        Return True if agent is still under waste limit.
+        """
+        return self._waste_dropped < self._max_waste
 
     def _move_toward(self, target: tuple) -> None:
         """
-        Move one step toward target.
-        Avoids oscillation by never stepping back to last position
-        unless it's the only option.
+        Move one step toward a target position.
+
+        Strategy:
+            - consider all walkable neighbors
+            - avoid immediately returning to the previous position if possible
+            - choose the neighbor with minimum Manhattan distance to target
         """
-        neighbors = self.get_walkable_neighbors()
+        neighbors = self._walkable_neighbors(self.pos) #get_walkable_neighbors()
         if not neighbors:
             return
 
@@ -138,7 +196,9 @@ class HumanAgent(BaseAgent):
         self.move_to(best)
 
     def _disappear(self) -> None:
-        """Remove agent from grid and model."""
+        """
+        Remove agent from grid and model.
+        """
         self.model.grid.remove_agent(self)
         self.model.agents.remove(self)
         self.is_active = False

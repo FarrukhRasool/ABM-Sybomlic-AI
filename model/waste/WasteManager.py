@@ -186,3 +186,19 @@ class WasteManager:
             "total_cleaned":    self.total_cleaned,
             "total_trips":      self.total_trips,
         }
+    
+
+
+    def has_waste(self, pos: tuple) -> bool:
+        """
+        Return True if there is waste on the given cell.
+        """
+        x, y = pos
+        return self._waste_grid[x, y] > 0
+
+    def pick_waste(self, pos: tuple, amount: int) -> int:
+        """
+        Remove up to `amount` units of waste from the cell and return
+        how much was actually picked.
+        """
+        return self.clean_waste(pos, amount)

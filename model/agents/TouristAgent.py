@@ -7,19 +7,15 @@ from constants import *
 
 class TouristAgent(BaseAgent):
     """
-    Represents a tourist visiting the city.
+    Tourist agent visiting the city.
 
-    Behavior:
-        1. Spawns at a park (attractive) cell
-        2. Wanders randomly but is attracted toward park cells
-        3. 20% chance per step to generate waste
-        4. Max 3-5 waste drops per visit
-        5. Walks to nearest bin — drops on road if bin full
-        6. Disappears after VISIT_DURATION steps
-
-    Real-world analogy:
-        A tourist visiting a city park, wandering around,
-        dropping more litter than locals, leaving after their visit.
+    Main behavior:
+        - Spawn in the attractive/tourist area
+        - Wander semi-randomly with a preference for attractive cells
+        - Generate waste with a higher probability than local humans
+        - Try to use a nearby bin when carrying waste
+        - Drop waste on the ground if no suitable bin is available
+        - Leave the simulation after a limited visit duration
     """
 
     WASTE_PROBABILITY = 0.20       # double human's 10%
@@ -28,6 +24,10 @@ class TouristAgent(BaseAgent):
     MAX_WASTE_MIN     = 3
     MAX_WASTE_MAX     = 5
 
+
+    # ==================================================================
+    # Initialization
+    # ==================================================================
     def __init__(self, model, start_pos: tuple):
         super().__init__(model)
         self.carrying_extra_waste  = False
@@ -38,12 +38,16 @@ class TouristAgent(BaseAgent):
         )
         self._waste_dropped  = 0
 
-    # ------------------------------------------------------------------ #
-    # Template Method implementation                                       #
-    # ------------------------------------------------------------------ #
+
+    # ==================================================================
+    # ABM logic: perceive -> decide -> act
+    # ==================================================================
 
     def perceive(self) -> dict:
-        neighbors     = self.get_walkable_neighbors()
+        """
+        Observe the local environment.
+        """
+        neighbors     = self._walkable_neighbors(self.pos) #get_walkable_neighbors()
 
         # Split neighbors into park and non-park
         park_neighbors = [
@@ -78,7 +82,18 @@ class TouristAgent(BaseAgent):
         }
 
     def decide(self, observation: dict) -> dict:
+        """
+        Select the next action based on local observations and internal mode.
 
+        Decision priorities:
+            1. If the visit is over -> disappear
+            2. If waste is generated and a bin is nearby -> move toward the bin
+            3. If waste is generated and no bin is nearby -> drop waste
+            4. If already carrying waste and at a bin -> deposit
+            5. If already carrying waste and a bin exists -> move toward it
+            6. If already carrying waste and no bin exists -> drop waste
+            7. Otherwise, continue wandering with attraction toward park cells
+        """
         # Visit is over → disappear
         if observation["visit_over"]:
             return {"action": "disappear"}
@@ -111,6 +126,16 @@ class TouristAgent(BaseAgent):
         }
 
     def act(self, decision: dict) -> None:
+        """
+        Execute the selected action.
+
+        Supported actions:
+            - disappear : remove the agent
+            - drop_waste : drop waste on the current cell if the surface allows it
+            - move_to_bin : move one step toward the target bin
+            - deposit_bin : deposit one unit into the bin
+            - wander : continue biased random exploration
+        """
         action = decision["action"]
         self._steps_taken += 1
 
@@ -125,7 +150,7 @@ class TouristAgent(BaseAgent):
             self._wander(
                 decision.get("park_neighbors", []),
                 decision.get("road_neighbors", []),
-                decision.get("neighbors", self.get_walkable_neighbors()),
+                decision.get("neighbors", self._walkable_neighbors(self.pos)) #get_walkable_neighbors()),
             )
 
         elif action == "move_to_bin":
@@ -145,10 +170,23 @@ class TouristAgent(BaseAgent):
                 decision["road_neighbors"],
                 decision["neighbors"],
             )
+        
+        # ------------------------------------------------------------
+        # Debug : Check the states of the agent
+        # ------------------------------------------------------------
+        # print(
+        #     "[TouristAgent]",
+        #     "id=", self.unique_id,
+        #     "action=", action,
+        #     "pos=", self.pos,
+        #     "load=", self.carrying_waste,
+        #     "steps_taken=", self._steps_taken,
+        #     "waste_dropped=", self._waste_dropped
+        # )
 
-    # ------------------------------------------------------------------ #
-    # Private helpers                                                      #
-    # ------------------------------------------------------------------ #
+    # ==================================================================
+    # Internal helpers
+    # ==================================================================
 
     def _can_drop_more(self) -> bool:
         return self._waste_dropped < self._max_extra_waste
@@ -184,8 +222,10 @@ class TouristAgent(BaseAgent):
         self.move_to(chosen)
 
     def _move_toward(self, target: tuple) -> None:
-        """Move one step toward target avoiding backtracking."""
-        neighbors = self.get_walkable_neighbors()
+        """
+        Move one step toward target avoiding backtracking.
+        """
+        neighbors = self._walkable_neighbors(self.pos) #get_walkable_neighbors()
         if not neighbors:
             return
         non_backtrack = [n for n in neighbors if n != self._last_pos]
@@ -195,7 +235,9 @@ class TouristAgent(BaseAgent):
         self.move_to(best)
 
     def _disappear(self) -> None:
-        """Remove tourist after visit duration."""
+        """
+        Remove tourist after visit duration.
+        """
         self.model.grid.remove_agent(self)
         self.remove()
         self.is_active = False

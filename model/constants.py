@@ -36,3 +36,6 @@ ROAD_WIDTH = 2
 BLOCK_SIZE = 12
 NUM_BLOCKS = 5
 MARGIN     = 4
+
+CLEAN_AGENT_CAPACITY = 1  # max waste units a cleaner can carry
+CONTAINER_AGENT_CAPACITY = 10  # max waste units a container transporter can carry

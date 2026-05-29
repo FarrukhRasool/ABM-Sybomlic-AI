@@ -35,14 +35,11 @@ CITY_CMAP = ListedColormap([
     "lightgrey",    # 0.0 road
     "saddlebrown",  # 1.0 building
     "gold",         # 2.0 attractive (park)
-    "blue",         # 3.0 door
+    "black",         # 3.0 door
     "limegreen",    # 4.0 bin
     "orange",       # 5.0 container
     "red",          # 6.0 disposal
     "crimson",      # 7.0 waste
-    #"purple",      # 8.0 cleanerstreet
-    #"yellow",      # 10.0 bintranspoter
-    #"cyan",        # 11.0 modelcitizen
  ])
 
 
@@ -88,13 +85,13 @@ class CityModel(Model):
 
         # ── Agent creation ───────────────────────────────────────────
         dummy = Agent(self)
-        self.factory.spawn_humans(1)    
-        self.factory.spawn_tourists(1)
-        self.factory.spawn_one_cleaner_per_vertical_street()
-        self.factory.spawn_one_cleaner_per_horizontal_street()
-        self.factory.spawn_park_cleaners_five_sectors(capacity=1)
-        self.factory.spawn_bin_transporters_by_building_column(capacity=1)
-        self.factory.spawn_container_transporter_simple(capacity=1)
+        # self.factory.spawn_humans(1)    
+        # self.factory.spawn_tourists(1)
+        # self.factory.spawn_one_cleaner_per_vertical_street()
+        # self.factory.spawn_one_cleaner_per_horizontal_street()
+        # self.factory.spawn_park_cleaners_five_sectors(capacity=CLEAN_AGENT_CAPACITY)
+        # self.factory.spawn_bin_transporters_by_building_column(capacity=CLEAN_AGENT_CAPACITY)
+        # self.factory.spawn_container_transporter_simple(capacity=CONTAINER_AGENT_CAPACITY)
         self.factory.spawn_model_citizens(count=1, capacity=1)
         self.grid.place_agent(dummy, (0, 0))
 
@@ -161,7 +158,7 @@ class CityModel(Model):
         Execute one full simulation step.
         """
         self.agents.shuffle_do("step")
-        self.factory.respawn_tourists_if_needed(minimum=1)
+        # self.factory.respawn_tourists_if_needed(minimum=1)
         self.datacollector.collect(self)
 
 
@@ -190,12 +187,12 @@ def agent_portrayal(agent):
         return {
             "color":  "white",
             "marker": "o",
-            "size":   250,
+            "size":   350,
             "zorder": 3,
         }
     if isinstance(agent, TouristAgent):
         return {
-            "color":  "black",
+            "color":  "Navy",
             "marker": "o",    # star shape — tourists stand out
             "size":   350,
             "zorder": 3,
@@ -212,28 +209,28 @@ def agent_portrayal(agent):
             "color": "purple",
             "marker": "0",
             "size": 350,
-            "zorder": 4,
+            "zorder": 3,
         }
     if isinstance(agent, BinTransporterAgent):
         return {
-            "color":  "yellow",
+            "color":  "blue",
             "marker": "o",
             "size":   350,
-            "zorder": 5,
+            "zorder": 3,
         }
     if isinstance(agent, ContainerTransporterAgent):
         return{
-            "color": "yellow",
+            "color": "deeppink",
             "marker": "o",
             "size": 350,
-            "zorder": 5,
+            "zorder": 3,
         }
     if isinstance(agent, ModelCitizenAgent):
         return {
             "color":  "red",
             "marker": "o",
             "size":   350,
-            "zorder": 6,
+            "zorder": 3,
         }
     return {
         "color":  "black",

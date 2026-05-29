@@ -6,7 +6,7 @@ from agents.CleanerStreetAgent import CleanerStreetAgent
 from agents.BinTransporterAgent import BinTransporterAgent
 from agents.ContainerTransporterAgent import ContainerTransporterAgent
 from agents.ModelCitizenAgent import ModelCitizenAgent
-
+from agents.TouristAgent import TouristAgent
 ########################
 from planning.PatrolPlanner import PatrolPlanner
 from planning.SectorPlanner import SectorPlanner
@@ -153,7 +153,6 @@ class AgentFactory:
         Maintain at least a minimum number of tourists in the model.
         Helps to keep tourist during the simulation (Tourist disappear after some time).
         """
-        from agents.TouristAgent import TouristAgent
         current = sum(1 for a in self.model.agents if isinstance(a, TouristAgent))
         if current < minimum:
             self.spawn_tourists(minimum - current)
@@ -199,9 +198,9 @@ class AgentFactory:
             # ------------------------------------------------------------
             # Debug : Check the generation of vertical street cleaner setup
             # ------------------------------------------------------------
-            print("Cleaner spawned on street:", group)
-            print("Start:", start, "Disposal:", disposal)
-            print("Patrol length:", len(patrol_path))
+            # print("Cleaner spawned on street:", group)
+            # print("Start:", start, "Disposal:", disposal)
+            # print("Patrol length:", len(patrol_path))
 
     
     # ==================================================================

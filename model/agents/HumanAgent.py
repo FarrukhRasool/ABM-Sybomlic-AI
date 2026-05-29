@@ -173,7 +173,17 @@ class HumanAgent(BaseAgent):
         elif action == "move":
             self._move_toward(decision["target"])
 
-
+        # Debug : Check the states of the agent 
+        # ------------------------------------------------------------
+        # print(
+        #     "[HumanAgent]",
+        #     "id=", self.unique_id,
+        #     "action=", action,
+        #     "pos=", self.pos,
+        #     "destination=", self.destination,
+        #     "carrying_extra_waste=", self.carrying_extra_waste,
+        #     "waste_dropped=", self._waste_dropped
+        # )
     # ------------------------------------------------------------------ #
     # Private helpers                                                      #
     # ------------------------------------------------------------------ #

@@ -10,10 +10,6 @@ BIN        = "bin"
 CONTAINER  = "container"
 DISPOSAL   = "disposal"
 WASTE      = "waste"
-CLEANERSTREET = "cleanerstreet"
-CLEANERPARK = "cleanerpark"
-BINTRANSPORTER = 'bintransporter'
-MODELCITIZEN = 'modelcitizen'
 
 
 CELL_TYPE_MAP = {
@@ -25,10 +21,6 @@ CELL_TYPE_MAP = {
     "container":  5.0,
     "disposal":   6.0,
     "waste":      7.0,
-    #"cleanerstreet": 8.0,
-    #"cleanerpark": 9.0,
-    #'bintransporteur': 10.0,
-    #'modelcitizen': 11.0,
 }
 
 
@@ -44,3 +36,6 @@ ROAD_WIDTH = 2
 BLOCK_SIZE = 12
 NUM_BLOCKS = 5
 MARGIN     = 4
+
+CLEAN_AGENT_CAPACITY = 1  # max waste units a cleaner can carry
+CONTAINER_AGENT_CAPACITY = 10  # max waste units a container transporter can carry

@@ -187,15 +187,15 @@ class BinTransporterAgent(BaseAgent):
         # ------------------------------------------------------------
         # Debug : Check the states of the agent 
         # ------------------------------------------------------------
-        print(
-            "[BinTransporterAgent]",
-            "id=", self.unique_id,
-            "mode=", self.mode,
-            "action=", action,
-            "pos=", self.pos,
-            "load=", f"{self.load}/{self.capacity}",
-            "path_index=", self.path_index
-        )
+        # print(
+        #     "[BinTransporterAgent]",
+        #     "id=", self.unique_id,
+        #     "mode=", self.mode,
+        #     "action=", action,
+        #     "pos=", self.pos,
+        #     "load=", f"{self.load}/{self.capacity}",
+        #     "path_index=", self.path_index
+        # )
 
     
     # ==================================================================

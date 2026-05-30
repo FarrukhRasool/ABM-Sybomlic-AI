@@ -24,7 +24,7 @@ CELL_TYPE_MAP = {
 }
 
 
-BIN_CAPACITY       = 10   # max waste units a bin can hold
+BIN_CAPACITY       = 0   # max waste units a bin can hold
 CONTAINER_CAPACITY = 50   # max waste units a container can hold
 
 

@@ -37,15 +37,28 @@ of any single agent.
 
 ## Agents
 
-| Agent | Role |
+| Agent | Color on map | Role |
+| --- | --- | --- |
+| `HumanAgent` | white | Local resident moving door to door; drops waste into bins when nearby, otherwise on the road. |
+| `TouristAgent` | navy | Visitor with a park-biased random walk and a higher waste-generation rate. |
+| `ModelCitizenAgent` | red | Prosocial citizen that picks up roadside waste and carries it to the nearest available bin. |
+| `CleanerStreetAgent` | purple | Patrols a fixed street route, collects waste, and offloads at the disposal area when full. |
+| `CleanerParkAgent` | purple | Same logic as the street cleaner, restricted to the park sector. |
+| `BinTransporterAgent` | blue | Empties bins along a building-column route and transfers their content to containers. |
+| `ContainerTransporterAgent` | deep pink | Empties containers and routes the waste to the disposal area. |
+
+Cell colors used for the city map:
+
+| Cell type | Color |
 | --- | --- |
-| `HumanAgent` | Local resident moving door to door; drops waste into bins when nearby, otherwise on the road. |
-| `TouristAgent` | Visitor with a park-biased random walk and a higher waste-generation rate. |
-| `ModelCitizenAgent` | Prosocial citizen that picks up roadside waste and carries it to the nearest available bin. |
-| `CleanerStreetAgent` | Patrols a fixed street route, collects waste, and offloads at the disposal area when full. |
-| `CleanerParkAgent` | Same logic as the street cleaner, restricted to the park sector. |
-| `BinTransporterAgent` | Empties bins along a building-column route and transfers their content to containers. |
-| `ContainerTransporterAgent` | Empties containers and routes the waste to the disposal area. |
+| Road | light grey |
+| Building | saddle brown |
+| Attractive (park) | gold |
+| Door | black |
+| Bin | lime green |
+| Container | orange |
+| Disposal | red |
+| Waste | crimson |
 
 All agents share a common `perceive → decide → act` cognitive loop defined in
 `BaseAgent`.
@@ -74,6 +87,22 @@ Key design points:
 - `SectorPlanner` discovers spatial groupings (streets, park sectors, building
   columns) from the live grid. `PatrolPlanner` turns those groupings into
   ordered patrol routes consumed by cleaners and transporters at spawn time.
+
+### Diagrams
+
+The implementation follows the canonical diagrams in `Diagrams/`.
+
+**Component diagram**
+
+![Component diagram](Diagrams/component_diagram.png)
+
+**Use case diagram**
+
+![Use case diagram](Diagrams/use_case_diagram.png)
+
+**Sequence diagram**
+
+![Sequence diagram](Diagrams/sequence_diagram.png)
 
 ---
 
@@ -113,10 +142,14 @@ A browser tab opens with the live city map and the waste-statistics plot.
 
 ## Configuration
 
-Static parameters (grid dimensions, block sizes, bin and container capacities,
-agent capacities) are defined in `model/constants.py`. Per-agent behavior
-parameters (waste probability, visit duration, park attraction) live as class
-constants on each agent.
+Static parameters: 
+- BINS_PER_BLOCK
+- BIN_CAPACITY
+- CONTAINER_CAPACITY
+- CLEAN_AGENT_CAPACITY
+- CONTAINER_AGENT_CAPACITY
+
+are defined in `model/constants.py`.
 
 Simulation scenarios are controlled through the constants exposed in
 `model/constants.py`: the number of humans, tourists, and model citizens, the

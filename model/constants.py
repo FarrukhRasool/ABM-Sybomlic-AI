@@ -23,7 +23,7 @@ CELL_TYPE_MAP = {
     "waste":      7.0,
 }
 
-
+BINS_PER_BLOCK = 3
 BIN_CAPACITY       = 10   # max waste units a bin can hold
 CONTAINER_CAPACITY = 50   # max waste units a container can hold
 

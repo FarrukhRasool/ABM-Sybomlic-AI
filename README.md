@@ -113,10 +113,14 @@ A browser tab opens with the live city map and the waste-statistics plot.
 
 ## Configuration
 
-Static parameters (grid dimensions, block sizes, bin and container capacities,
-agent capacities) are defined in `model/constants.py`. Per-agent behavior
-parameters (waste probability, visit duration, park attraction) live as class
-constants on each agent.
+Static parameters: 
+- BINS_PER_BLOCK
+- BIN_CAPACITY
+- CONTAINER_CAPACITY
+- CLEAN_AGENT_CAPACITY
+- CONTAINER_AGENT_CAPACITY
+
+are defined in `model/constants.py`.
 
 Simulation scenarios are controlled through the constants exposed in
 `model/constants.py`: the number of humans, tourists, and model citizens, the

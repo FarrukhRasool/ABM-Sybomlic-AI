@@ -4,8 +4,7 @@
 ### 🏙️ Environment
 A grid-based city consisting of semantically distinct cell types, designed to model pedestrian and service movement without unnecessary geometric complexity:
 
-- Perpendicular roads arranged in an American-style grid
-- Sidewalks represented **semantically** as pedestrian-walkable cells adjacent to roads
+- Perpendicular roads arranged grid
 - Buildings as non-walkable blocks that serve as start and end points for agents
 - Attractive areas that influence agent movement and waste generation:
   - Central
@@ -15,8 +14,6 @@ A grid-based city consisting of semantically distinct cell types, designed to mo
   - Bins placed at road intersections (low waste capacity)
   - Containers placed in the North-West and South-East of the city (high waste capacity)
   - A disposal area that permanently removes waste from the system
-
-Sidewalks are modeled as a **walkable pedestrian surface**, not as explicit left/right geometric structures. Road crossing is allowed implicitly through road cells where permitted.
 
 ---
 

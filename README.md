@@ -88,6 +88,22 @@ Key design points:
   columns) from the live grid. `PatrolPlanner` turns those groupings into
   ordered patrol routes consumed by cleaners and transporters at spawn time.
 
+### Diagrams
+
+The implementation follows the canonical diagrams in `Diagrams/`.
+
+**Component diagram**
+
+![Component diagram](Diagrams/Component%20Diagram.png)
+
+**Use case diagram**
+
+![Use case diagram](Diagrams/Use%20Case%20Diagram.png)
+
+**Sequence diagram**
+
+![Sequence diagram](Diagrams/Seuence%20diagram.png)
+
 ---
 
 ## Requirements

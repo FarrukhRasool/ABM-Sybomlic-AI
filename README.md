@@ -37,15 +37,28 @@ of any single agent.
 
 ## Agents
 
-| Agent | Role |
+| Agent | Color on map | Role |
+| --- | --- | --- |
+| `HumanAgent` | white | Local resident moving door to door; drops waste into bins when nearby, otherwise on the road. |
+| `TouristAgent` | navy | Visitor with a park-biased random walk and a higher waste-generation rate. |
+| `ModelCitizenAgent` | red | Prosocial citizen that picks up roadside waste and carries it to the nearest available bin. |
+| `CleanerStreetAgent` | purple | Patrols a fixed street route, collects waste, and offloads at the disposal area when full. |
+| `CleanerParkAgent` | purple | Same logic as the street cleaner, restricted to the park sector. |
+| `BinTransporterAgent` | blue | Empties bins along a building-column route and transfers their content to containers. |
+| `ContainerTransporterAgent` | deep pink | Empties containers and routes the waste to the disposal area. |
+
+Cell colors used for the city map:
+
+| Cell type | Color |
 | --- | --- |
-| `HumanAgent` | Local resident moving door to door; drops waste into bins when nearby, otherwise on the road. |
-| `TouristAgent` | Visitor with a park-biased random walk and a higher waste-generation rate. |
-| `ModelCitizenAgent` | Prosocial citizen that picks up roadside waste and carries it to the nearest available bin. |
-| `CleanerStreetAgent` | Patrols a fixed street route, collects waste, and offloads at the disposal area when full. |
-| `CleanerParkAgent` | Same logic as the street cleaner, restricted to the park sector. |
-| `BinTransporterAgent` | Empties bins along a building-column route and transfers their content to containers. |
-| `ContainerTransporterAgent` | Empties containers and routes the waste to the disposal area. |
+| Road | light grey |
+| Building | saddle brown |
+| Attractive (park) | gold |
+| Door | black |
+| Bin | lime green |
+| Container | orange |
+| Disposal | red |
+| Waste | crimson |
 
 All agents share a common `perceive → decide → act` cognitive loop defined in
 `BaseAgent`.

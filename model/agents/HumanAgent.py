@@ -197,17 +197,8 @@ class HumanAgent(BaseAgent):
 
         # Debug : Check the states of the agent 
         # ------------------------------------------------------------
-        # print(
-        #     "[HumanAgent]",
-        #     "id=", self.unique_id,
-        #     "action=", action,
-        #     "pos=", self.pos,
-        #     "destination=", self.destination,
-        #     "carrying_extra_waste=", self.carrying_extra_waste,
-        #     "waste_dropped=", self._waste_dropped
-        # )
         print(
-            f"[🚶 HumanAgent]: id= {self.unique_id} at current pos: {self.pos} | action= {action} | Destination pos: {self.destination} | "
+            f"[ HumanAgent]: id= {self.unique_id} at current pos: {self.pos} | action= {action} | Destination pos: {self.destination} | "
             f"Default units remaining: {self.waste_units}/5 | "
             f"Extra waste dropped: {self._waste_dropped} | "
             f"Carrying extra waste: {self.carrying_extra_waste}"

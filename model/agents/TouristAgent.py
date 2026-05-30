@@ -56,6 +56,18 @@ class TouristAgent(BaseAgent):
         ]
         road_neighbors = [n for n in neighbors if n not in park_neighbors]
 
+        adjacent_bins = [
+        pos for pos, b in self.model.waste.bins.items()
+        if abs(pos[0]-self.pos[0]) + abs(pos[1]-self.pos[1]) <= 1
+        and not b.is_full and b.is_active
+    ]
+
+        # Adjacent full bins ← NEW
+        adjacent_full_bins = [
+            pos for pos, b in self.model.waste.bins.items()
+            if abs(pos[0]-self.pos[0]) + abs(pos[1]-self.pos[1]) <= 1
+            and b.is_full and b.is_active
+        ]
         # Find nearest bin
         bins     = self.model.waste.bins
         near_bin = self.get_nearest(
@@ -76,6 +88,8 @@ class TouristAgent(BaseAgent):
             "park_neighbors":  park_neighbors,
             "road_neighbors":  road_neighbors,
             "visit_over":      self._steps_taken >= self.VISIT_DURATION,
+            "adjacent_bins":       adjacent_bins,      
+            "adjacent_full_bins":  adjacent_full_bins,  
             "nearest_bin":     near_bin,
             "carrying_extra_waste":  self.carrying_extra_waste,
             "generate_waste":  can_generate,
@@ -97,7 +111,16 @@ class TouristAgent(BaseAgent):
         # Visit is over → disappear
         if observation["visit_over"]:
             return {"action": "disappear"}
+        # Carrying waste + adjacent available bin → deposit ← NEW
+        if observation["carrying_extra_waste"] and observation["adjacent_bins"]:
+            return {
+                "action":  "deposit_bin",
+                "bin_pos": observation["adjacent_bins"][0],
+            }
 
+        # Carrying waste + adjacent FULL bin → drop on road ← NEW
+        if observation["carrying_extra_waste"] and observation["adjacent_full_bins"]:
+            return {"action": "drop_waste"}
         # Generate waste this step
         if observation["generate_waste"]:
             bin_pos = observation["nearest_bin"]
@@ -159,9 +182,12 @@ class TouristAgent(BaseAgent):
         elif action == "deposit_bin":
             overflow = self.model.waste.deposit_to_bin(decision["bin_pos"], 1)
             if overflow > 0:
+                # Bin full → drop on road
                 if self.model.waste.is_wasteable(self.pos) and self._can_drop_more():
                     self.model.waste.add_waste(self.pos)
                     self._waste_dropped += 1
+            else:
+                self._waste_dropped += 1   # ← count successful deposit
             self.carrying_extra_waste = False
 
         elif action == "wander":
@@ -174,15 +200,15 @@ class TouristAgent(BaseAgent):
         # ------------------------------------------------------------
         # Debug : Check the states of the agent
         # ------------------------------------------------------------
-        # print(
-        #     "[TouristAgent]",
-        #     "id=", self.unique_id,
-        #     "action=", action,
-        #     "pos=", self.pos,
-        #     "load=", self.carrying_waste,
-        #     "steps_taken=", self._steps_taken,
-        #     "waste_dropped=", self._waste_dropped
-        # )
+        print(
+            "[TouristAgent]",
+            "id=", self.unique_id,
+            "action=", action,
+            "pos=", self.pos,
+            "Waste units=", self._max_extra_waste,
+            "steps_taken=", self._steps_taken,
+            "waste_dropped=", self._waste_dropped
+        )
 
     # ==================================================================
     # Internal helpers

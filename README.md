@@ -94,15 +94,15 @@ The implementation follows the canonical diagrams in `Diagrams/`.
 
 **Component diagram**
 
-![Component diagram](Diagrams/Component%20Diagram.png)
+![Component diagram](Diagrams/component_diagram.png)
 
 **Use case diagram**
 
-![Use case diagram](Diagrams/Use%20Case%20Diagram.png)
+![Use case diagram](Diagrams/use_case_diagram.png)
 
 **Sequence diagram**
 
-![Sequence diagram](Diagrams/Seuence%20diagram.png)
+![Sequence diagram](Diagrams/sequence_diagram.png)
 
 ---
 

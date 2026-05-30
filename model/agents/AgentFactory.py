@@ -7,6 +7,7 @@ from agents.BinTransporterAgent import BinTransporterAgent
 from agents.ContainerTransporterAgent import ContainerTransporterAgent
 from agents.ModelCitizenAgent import ModelCitizenAgent
 from agents.TouristAgent import TouristAgent
+from agents.HumanAgent import HumanAgent
 ########################
 from planning.PatrolPlanner import PatrolPlanner
 from planning.SectorPlanner import SectorPlanner
@@ -21,9 +22,6 @@ class AgentFactory:
         - Scan the city map for important positions
         - Spawn agents at valid positions
         - Assign initial patrol routes or task sectors when needed
-
-    Design pattern:
-        Factory Pattern
 
     Real-world analogy:
         A city management office that decides where residents, tourists,
@@ -94,7 +92,6 @@ class AgentFactory:
         Spawn a HumanAgent at a random door heading to another random door.
         Start and destination must be different doors.
         """
-        from agents.HumanAgent import HumanAgent
 
         if len(self._door_positions) < 2:
             return
@@ -198,9 +195,10 @@ class AgentFactory:
             # ------------------------------------------------------------
             # Debug : Check the generation of vertical street cleaner setup
             # ------------------------------------------------------------
-            # print("Cleaner spawned on street:", group)
-            # print("Start:", start, "Disposal:", disposal)
-            # print("Patrol length:", len(patrol_path))
+            print("Cleaner spawned on street:", group)
+            print("Start:", start, "Disposal:", disposal)
+            print("Patrol length:", len(patrol_path))
+            print("===================================================", "\n")
 
     
     # ==================================================================
@@ -248,6 +246,7 @@ class AgentFactory:
             print("Patrol length:", len(patrol_path))
             print("Horizontal street groups found:", street_groups)
             print("Horizontal patrol path sample:", patrol_path[:10], "...", patrol_path[-10:])
+            print("===================================================", "\n")
 
 
     # ==================================================================
@@ -306,6 +305,7 @@ class AgentFactory:
             print(f"Park cleaner spawned: sector={sector_name}")
             print("Start:", start, "Disposal:", disposal)
             print("Patrol length:", len(patrol_path))
+            print("===================================================", "\n")
 
     # ==================================================================
     # Bin transporters - building-column decomposition
@@ -358,7 +358,8 @@ class AgentFactory:
             print("Start:", start)
             print("Assigned bins:", len(assigned_bins))
             print("Assigned containers:", len(assigned_containers))
-            print("Patrol length:", len(patrol_path))
+            print("Patrol length:", len(patrol_path)), "\n"
+            print("==================================================="), "\n"
 
 
     # ==================================================================
@@ -407,7 +408,7 @@ class AgentFactory:
         print("Start (bottom-left container):", start)
         print("Disposal:", disposal)
         print("Assigned containers:", len(patrol_path))
-
+        print("==================================================="), "\n"
     
     # ==================================================================
     # Model citizens

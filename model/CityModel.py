@@ -86,13 +86,13 @@ class CityModel(Model):
         # ── Agent creation ───────────────────────────────────────────
         dummy = Agent(self)
         # self.factory.spawn_humans(1)    
-        self.factory.spawn_tourists(1)
+        # self.factory.spawn_tourists(1)
         # self.factory.spawn_one_cleaner_per_vertical_street()
         # self.factory.spawn_one_cleaner_per_horizontal_street()
         # self.factory.spawn_park_cleaners_five_sectors(capacity=CLEAN_AGENT_CAPACITY)
         # self.factory.spawn_bin_transporters_by_building_column(capacity=CLEAN_AGENT_CAPACITY)
         # self.factory.spawn_container_transporter_simple(capacity=CONTAINER_AGENT_CAPACITY)
-        # self.factory.spawn_model_citizens(count=1, capacity=1)
+        self.factory.spawn_model_citizens(count=1, capacity=1)
         self.grid.place_agent(dummy, (0, 0))
 
         # ── Ploting waste gestion ──────────────────────────────────────

@@ -156,16 +156,16 @@ class CleanerStreetAgent(BaseAgent):
         # ------------------------------------------------------------
         # Debug : Check the states of the agent 
         # ------------------------------------------------------------
-        # print(
-        #     "[CleanerStreetAgent]",
-        #     "id=", self.unique_id,
-        #     "orientation=", getattr(self, "patrol_orientation", "?"),
-        #     "mode=", self.mode,
-        #     "action=", action,
-        #     "pos=", self.pos,
-        #     "load=", f"{self.load}/{self.capacity}",
-        #     "path_index=", self.path_index
-        # )
+        print(
+            "[CleanerStreetAgent]",
+            "id=", self.unique_id,
+            "orientation=", getattr(self, "patrol_orientation", "?"),
+            "mode=", self.mode,
+            "action=", action,
+            "pos=", self.pos,
+            "load=", f"{self.load}/{self.capacity}",
+            "path_index=", self.path_index, "\n"
+        )
             
 
     

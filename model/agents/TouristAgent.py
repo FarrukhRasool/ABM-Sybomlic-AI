@@ -200,15 +200,12 @@ class TouristAgent(BaseAgent):
         # ------------------------------------------------------------
         # Debug : Check the states of the agent
         # ------------------------------------------------------------
-        print(
-            "[TouristAgent]",
-            "id=", self.unique_id,
-            "action=", action,
-            "pos=", self.pos,
-            "Waste units=", self._max_extra_waste,
-            "steps_taken=", self._steps_taken,
-            "waste_dropped=", self._waste_dropped
-        )
+       
+        # print(f"[TouristAgent]: id= {self.unique_id} | action= {action} | pos: {self.pos} | ")
+        # print(f"Waste units= {self._max_extra_waste}")
+        # print(f"Steps taken=: {self._steps_taken} ")
+        # print(f"Waste dropped: {self._waste_dropped}")
+        # print("==================================================="), "\n"
 
     # ==================================================================
     # Internal helpers

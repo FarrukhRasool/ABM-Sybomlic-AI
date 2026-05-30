@@ -118,22 +118,13 @@ agent capacities) are defined in `model/constants.py`. Per-agent behavior
 parameters (waste probability, visit duration, park attraction) live as class
 constants on each agent.
 
-A `CityModel` instance can also be parametrized programmatically:
-
-```python
-from model.CityModel import CityModel
-
-model = CityModel(
-    num_humans=5,
-    num_tourists=8,
-    num_model_citizens=2,
-    street_cleaner_capacity=3,
-    park_cleaner_capacity=2,
-    bin_transporter_capacity=5,
-    container_transporter_capacity=10,
-    model_citizen_capacity=4,
-)
-```
+Simulation scenarios are controlled through the constants exposed in
+`model/constants.py`: the number of humans, tourists, and model citizens, the
+number of bins and containers and agent carrying capacities .
+Edit these values to experiment with different situations — for
+example, a tourist-heavy city, an under-bin-supplied district, or a fleet of
+high-capacity transporters — and re-run the simulation to observe how the
+emergent waste distribution changes.
 
 ---
 

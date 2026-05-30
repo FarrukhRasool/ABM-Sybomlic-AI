@@ -45,6 +45,11 @@ class HumanAgent(BaseAgent):
             if abs(pos[0]-self.pos[0]) + abs(pos[1]-self.pos[1]) <= 1
             and not b.is_full and b.is_active
         ]
+        adjacent_full_bins = [
+        pos for pos, b in self.model.waste.bins.items()
+        if abs(pos[0]-self.pos[0]) + abs(pos[1]-self.pos[1]) <= 1
+        and b.is_full and b.is_active
+    ]
         # Find nearest bin
         bins     = self.model.waste.bins
         near_bin = self.get_nearest(
@@ -65,7 +70,8 @@ class HumanAgent(BaseAgent):
             "current_cell":   self.get_current_cell_type(),
             "neighbors":      neighbors,
             "at_destination": self.pos == self.destination,
-            "adjacent_bins":  adjacent_bins,              
+            "adjacent_bins":  adjacent_bins,
+            "adjacent_full_bins":  adjacent_full_bins,                
             "has_units":      self.waste_units > 0,       
             "nearest_bin":    near_bin,
             "carrying_extra_waste": self.carrying_extra_waste,
@@ -85,6 +91,8 @@ class HumanAgent(BaseAgent):
             6. If already carrying waste and no bin exists -> drop waste
             7. Otherwise continue toward destination
         """
+        if self.carrying_extra_waste and not self._can_drop_more_waste():
+            self.carrying_extra_waste = False
         # Reached destination → disappear
         if observation["at_destination"]:
             return {"action": "disappear"}
@@ -97,7 +105,15 @@ class HumanAgent(BaseAgent):
                 "action":  "deposit",           # ← one unified action
                 "bin_pos": observation["adjacent_bins"][0],
             }
+        
+        # Full bin adjacent + has default units → drop on road 
+        if observation["adjacent_full_bins"] and observation["has_units"]:
+            return {"action": "drop_default_road"}
 
+        # Full bin adjacent + carrying extra waste → drop on road 
+        if observation["adjacent_full_bins"] and observation["carrying_extra_waste"]:
+            return {"action": "drop_waste"}
+        
         # Carrying generated waste, no adjacent bin → move toward nearest
         if observation["carrying_extra_waste"]:
             near_bin = observation["nearest_bin"]
@@ -172,18 +188,20 @@ class HumanAgent(BaseAgent):
 
         elif action == "move":
             self._move_toward(decision["target"])
+        elif action == "drop_default_road":
+            # Bin was full → drop default unit on road
+            if self.model.waste.is_wasteable(self.pos):
+                self.model.waste.add_waste(self.pos)
+            self.waste_units -= 1
+            self._move_toward(self.destination)
 
         # Debug : Check the states of the agent 
         # ------------------------------------------------------------
-        # print(
-        #     "[HumanAgent]",
-        #     "id=", self.unique_id,
-        #     "action=", action,
-        #     "pos=", self.pos,
-        #     "destination=", self.destination,
-        #     "carrying_extra_waste=", self.carrying_extra_waste,
-        #     "waste_dropped=", self._waste_dropped
-        # )
+        # print(f"[HumanAgent]: id= {self.unique_id} at current pos: {self.pos} | action= {action} | Destination pos: {self.destination} | ")
+        # print(f"Default units remaining: {self.waste_units}/5")
+        # print(f"Extra waste dropped: {self._waste_dropped} ")
+        # print(f"Carrying extra waste: {self.carrying_extra_waste}")
+        # print("==================================================="), "\n"
     # ------------------------------------------------------------------ #
     # Private helpers                                                      #
     # ------------------------------------------------------------------ #

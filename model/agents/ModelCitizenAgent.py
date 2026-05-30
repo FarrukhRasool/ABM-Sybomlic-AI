@@ -127,14 +127,10 @@ class ModelCitizenAgent(BaseAgent):
         # ------------------------------------------------------------
         # Debug : Check the states of the agent 
         # ------------------------------------------------------------
-        print(
-            "[ModelCitizenAgent]",
-            "id=", self.unique_id,
-            "mode=", self.mode,
-            "action=", action,
-            "pos=", self.pos,
-            "load=", f"{self.load}/{self.capacity}"
-        )
+        # print(f"[ModelCitizenAgent]: id= {self.unique_id} | mode= {self.mode} | pos: {self.pos}  ")
+        # print(f"Action: {action}")
+        # print(f"Carrying waste capacity: {self.load}/{self.capacity}")
+        # print("==================================================="), "\n"
 
     # ==================================================================
     # Movement helpers

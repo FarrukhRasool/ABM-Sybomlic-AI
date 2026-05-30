@@ -8,8 +8,6 @@ BLOCK_SIZE = 12
 NUM_BLOCKS = 5
 MARGIN     = 4
 
-# How many bins to place randomly near each building block
-BINS_PER_BLOCK = 2
 
 class CityGridBuilder:
     def __init__(self, width, height, seed=42):

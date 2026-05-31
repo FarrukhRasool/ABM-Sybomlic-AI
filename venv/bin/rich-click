@@ -1,5 +1,5 @@
 #!/bin/sh
-'''exec' "/Users/pakwheels/Desktop/MAI/3rd Semester/Sybolic AI/ABM Cleaning Agents/venv/bin/python" "$0" "$@"
+'''exec' "/Users/pakwheels/Desktop/MAI/3rd Semester/Sybolic AI/Rasool_Simon_SARA_Project/ABM Cleaning Agents/venv/bin/python" "$0" "$@"
 ' '''
 # -*- coding: utf-8 -*-
 import re

@@ -35,7 +35,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="/Users/pakwheels/Desktop/MAI/3rd Semester/Sybolic AI/ABM Cleaning Agents/venv"
+VIRTUAL_ENV="/Users/pakwheels/Desktop/MAI/3rd Semester/Sybolic AI/Rasool_Simon_SARA_Project/ABM Cleaning Agents/venv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

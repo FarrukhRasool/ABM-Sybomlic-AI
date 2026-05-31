@@ -7,8 +7,7 @@ city-level waste distribution emerges from the interaction of residents,
 tourists, bin and container infrastructure, and a fleet of cleaning and
 transport agents.
 
-This project is part of the *Symbolic AI* course (3rd semester, MAI). The
-implementation follows the component, use-case, and sequence diagrams stored in
+This project implementation follows the component, use-case, and sequence diagrams stored in
 `Diagrams/`.
 
 ---
